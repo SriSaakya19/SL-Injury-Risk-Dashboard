@@ -9,11 +9,10 @@ st.markdown("---")
 def load_data():
     try:
         df = pd.read_csv('data/player_workload.csv')
-        # Columns lo space teesi, proper case ki marchadam
         df.columns = df.columns.str.strip().str.title()
         return df
     except FileNotFoundError:
-        st.error("❌ 'data/player_workload.csv' file dorakaledu. GitHub lo 'data' folder unda check cheyyi.")
+        st.error("❌ 'data/player_workload.csv' file not found. Please check 'data' folder on GitHub.")
         return pd.DataFrame()
 
 df = load_data()
@@ -21,10 +20,10 @@ df = load_data()
 if df.empty:
     st.stop()
 
-# Debug: CSV lo em columns unnayo chupiddam
-st.info(f"CSV lo dorikina columns: {list(df.columns)}")
+# Show detected columns
+st.info(f"Detected columns in CSV: {list(df.columns)}")
 
-# Column names auto detect cheddam
+# Auto detect columns
 player_col = None
 date_col = None  
 workload_col = None
@@ -34,21 +33,19 @@ for col in df.columns:
         player_col = col
     if 'date' in col.lower():
         date_col = col
-    # Ikkada Total_Balls kuda accept chesthundi
     if 'workload' in col.lower() or 'load' in col.lower() or 'balls' in col.lower():
         workload_col = col
 
-# Columns dorikaya check
 if not player_col or not workload_col:
-    st.error(f"❌ CSV lo 'Player' and 'Workload/Total_Balls' columns undali. Nuvvu unna columns: {list(df.columns)}")
+    st.error(f"❌ CSV must have 'Player' and 'Workload/Total_Balls' columns. Found: {list(df.columns)}")
     st.stop()
 
-# Sidebar filters
+# Sidebar
 st.sidebar.header("Filters")
-players = st.sidebar.multiselect("Player select cheyyi", df[player_col].unique(), default=df[player_col].unique()[:3])
+players = st.sidebar.multiselect("Select Players", df[player_col].unique(), default=df[player_col].unique()[:3])
 
 if not players:
-    st.warning("Oka player aina select cheyyi")
+    st.warning("Please select at least one player")
     st.stop()
 
 filtered_df = df[df[player_col].isin(players)]
@@ -71,11 +68,11 @@ with col2:
 
 # Risk Alert
 st.subheader("⚠️ Injury Risk Alert")
-threshold = 100  # nuvvu ee number marchukovachu
+threshold = 100
 high_risk = filtered_df[filtered_df[workload_col] > threshold]
 
 if not high_risk.empty:
-    st.warning(f"⚠️ {len(high_risk)} records lo high workload > {threshold} kanipinchindi")
+    st.warning(f"⚠️ {len(high_risk)} records found with high workload > {threshold}")
     st.dataframe(high_risk[[player_col, workload_col]])
 else:
     st.success("✅ All players are in safe workload zone")
