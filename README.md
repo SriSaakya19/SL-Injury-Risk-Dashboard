@@ -16,3 +16,5 @@ Python, Pandas, Scikit-learn, Streamlit, Matplotlib
 ```bash
 pip install streamlit pandas scikit-learn
 streamlit run dashboard.py
+## Demo
+![Risk Graph](data/risk_graph.png)
