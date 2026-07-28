@@ -79,7 +79,7 @@ with st.expander("About This Dashboard"):
     - Use filters to focus on specific players
     - Review risk alerts to take preventive action
     
-    **Built by**: SAKYA using Python, Pandas, Streamlit
+    **Built by**: Saakya using Python, Pandas, Streamlit
     """)
 
 st.caption("Built for SL Cricket Team | Deployed on Streamlit Cloud")
