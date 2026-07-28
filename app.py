@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="SL Injury Risk Dashboard", layout="wide")
 st.title("🏏 Sri Lanka Cricket - Injury Risk Dashboard")
@@ -35,17 +34,22 @@ for col in df.columns:
         player_col = col
     if 'date' in col.lower():
         date_col = col
-    if 'workload' in col.lower() or 'load' in col.lower():
+    # Ikkada Total_Balls kuda accept chesthundi
+    if 'workload' in col.lower() or 'load' in col.lower() or 'balls' in col.lower():
         workload_col = col
 
 # Columns dorikaya check
 if not player_col or not workload_col:
-    st.error(f"❌ CSV lo 'Player' and 'Workload' columns undali. Nuvvu unna columns: {list(df.columns)}")
+    st.error(f"❌ CSV lo 'Player' and 'Workload/Total_Balls' columns undali. Nuvvu unna columns: {list(df.columns)}")
     st.stop()
 
-# Sidebar
+# Sidebar filters
 st.sidebar.header("Filters")
 players = st.sidebar.multiselect("Player select cheyyi", df[player_col].unique(), default=df[player_col].unique()[:3])
+
+if not players:
+    st.warning("Oka player aina select cheyyi")
+    st.stop()
 
 filtered_df = df[df[player_col].isin(players)]
 
@@ -59,21 +63,22 @@ with col1:
 with col2:
     st.subheader("📈 Workload Trend")
     if date_col:
-        for player in players:
-            player_data = filtered_df[filtered_df[player_col] == player]
-            chart_data = player_data.set_index(date_col)[workload_col]
-            st.line_chart(chart_data)
+        chart_data = filtered_df.pivot_table(index=date_col, columns=player_col, values=workload_col)
+        st.line_chart(chart_data)
     else:
-        st.bar_chart(filtered_df.set_index(player_col)[workload_col])
+        chart_data = filtered_df.groupby(player_col)[workload_col].sum()
+        st.bar_chart(chart_data)
 
 # Risk Alert
 st.subheader("⚠️ Injury Risk Alert")
-if workload_col:
-    high_risk = filtered_df[filtered_df[workload_col] > 100]  # 100 threshold - nuvvu marchukovachu
-    if not high_risk.empty:
-        st.warning(f"⚠️ {len(high_risk)} records lo high workload kanipinchindi")
-    else:
-        st.success("✅ All players are in safe workload zone")
+threshold = 100  # nuvvu ee number marchukovachu
+high_risk = filtered_df[filtered_df[workload_col] > threshold]
+
+if not high_risk.empty:
+    st.warning(f"⚠️ {len(high_risk)} records lo high workload > {threshold} kanipinchindi")
+    st.dataframe(high_risk[[player_col, workload_col]])
+else:
+    st.success("✅ All players are in safe workload zone")
 
 st.markdown("---")
 st.caption("Built with Streamlit for SL Cricket Team")
